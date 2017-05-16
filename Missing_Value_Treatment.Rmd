@@ -1,7 +1,6 @@
 ---
 title: "Missing Value Treatment"
 output:
-  pdf_document: default
   html_notebook: default
 ---
 
