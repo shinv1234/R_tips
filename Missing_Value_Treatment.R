@@ -53,7 +53,7 @@ actuals3 <- original$ptratio[is.na(BostonHousing$ptratio)]
 predicteds3 <- knnOutput[is.na(BostonHousing$ptratio), "ptratio"]
 regr.eval(actuals3, predicteds3) # regr.eval{DMwR}
 
-# 
+# CART imputation from rpart
 class_mod <- rpart(rad ~ . - medv, 
                    data = BostonHousing[!is.na(BostonHousing$rad), ], 
                    method = "class", 
@@ -67,8 +67,16 @@ rad_pred <- predict(class_mod,
 ptradio_pred <- predict(anova_mod,
                         BostonHousing[is.na(BostonHousing$ptratio), ])
 
-# accuracy( )
+# accuracy(CART imputation for "ptratio")
 actuals4 <- original$ptratio[is.na(BostonHousing$ptratio)]
 predicteds4 <- ptradio_pred
 regr.eval(actuals4, predicteds4) # regr.eval{DMwR}
+
+# accuracy(CART imputation for "rad")
+actuals5 <- original$rad[is.na(BostonHousing$rad)]
+predicteds5 <- as.numeric(colnames(rad_pred)[apply(rad_pred, 1, which.max)])
+mean(actuals5 != predicteds5)
+
+
+
 
