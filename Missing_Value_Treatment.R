@@ -3,6 +3,7 @@ library(mice)
 library(Hmisc)
 library(DMwR)
 library(rpart)
+library(mice)
 
 # load dataset
 data("BostonHousing", package="mlbench")
@@ -46,7 +47,7 @@ regr.eval(actuals2, predicteds2) # regr.eval{DMwR}
 # KNN imputation(without target variable "medv")
 knnOutput <- knnImputation(BostonHousing[, !names(BostonHousing) %in% "medv"]) # knnImputation {DMwR}
 anyNA(knnOutput) # Check for missing values
-md.pattern(knnOutput)
+md.pattern(knnOutput) # md.pattern{mice}
 
 # accuracy(KNN imputation)
 actuals3 <- original$ptratio[is.na(BostonHousing$ptratio)]
@@ -77,6 +78,21 @@ actuals5 <- original$rad[is.na(BostonHousing$rad)]
 predicteds5 <- as.numeric(colnames(rad_pred)[apply(rad_pred, 1, which.max)])
 mean(actuals5 != predicteds5)
 
+# MICE imputation(based on random forests)
+miceMod <- mice(BostonHousing[, !names(BostonHousing) %in% "medv"], method="rf") # mice{mice} 
+miceMod
 
+# generate the completed data
+miceOutput <- complete(miceMod)  # complete{mice}
+anyNA(miceOutput)
+md.pattern(miceOutput) # md.pattern{mice}
 
+# accuracy(MICE imputation for "ptratio")
+actuals6 <- original$ptratio[is.na(BostonHousing$ptratio)]
+predicteds6 <- miceOutput[is.na(BostonHousing$ptratio), "ptratio"]
+regr.eval(actuals6, predicteds6) # regr.eval{DMwR}
 
+# accuracy(MICE imputation for "rad")
+actuals7 <- original$rad[is.na(BostonHousing$rad)]
+predicteds7 <- miceOutput[is.na(BostonHousing$rad), "rad"]
+mean(actuals7 != predicteds7) 
