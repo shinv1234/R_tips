@@ -112,6 +112,20 @@ points(training$age, predict(lm1, newdata=training), col="red", pch=19, cex=0.5)
 # Multicore Parallel Processing (Pass..)
 
 
+# PCA
+prComp <- prcomp(log10(spam[,-58]+1))
+head(prComp$rotation[, 1:5])
+typeColor <- ((spam$type == "spam")*1 + 1)
+plot(prComp$x[,1], prComp$x[,2], col=typeColor, xlab="PC1", ylab="PC2")
 
 
+inTrain <- createDataPartition(y=spam$type, p=0.75, list=FALSE)
+training <- spam[inTrain, ]
+testing <- spam[-inTrain, ]
+preProc <- preProcess(log10(training[,-58] + 1), method="pca", pcaComp=2)
+trainPC <- predict(preProc, log10(training[,-58] + 1))
+modelFit <- train(training$type ~ ., method='glm', data=trainPC)
+testPC <- predict(preProc, log10(testing[,-58] + 1))
+confusionMatrix(testing$type, predict(modelFit, testPC))
 
+# 
