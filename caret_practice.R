@@ -8,6 +8,7 @@ library(gridExtra)
 library(splines)
 data(spam)
 data(Wage)
+data(faithful)
 
 ### Spliting Data
 # Spliting Train and Test dataset
@@ -118,14 +119,60 @@ head(prComp$rotation[, 1:5])
 typeColor <- ((spam$type == "spam")*1 + 1)
 plot(prComp$x[,1], prComp$x[,2], col=typeColor, xlab="PC1", ylab="PC2")
 
-
+# Pass...
 inTrain <- createDataPartition(y=spam$type, p=0.75, list=FALSE)
 training <- spam[inTrain, ]
 testing <- spam[-inTrain, ]
 preProc <- preProcess(log10(training[,-58] + 1), method="pca", pcaComp=2)
 trainPC <- predict(preProc, log10(training[,-58] + 1))
 modelFit <- train(training$type ~ ., method='glm', data=trainPC)
-testPC <- predict(preProc, log10(testing[,-58] + 1))
-confusionMatrix(testing$type, predict(modelFit, testPC))
+confusionMatrix(testing$type,predict(modelFit,testPC))
+confusionMatrix(testing$type,predict(modelFit,testPC))
 
-# 
+modelFit <- train(training$type ~ .,method="glm",preProcess="pca",data=training)
+confusionMatrix(testing$type,predict(modelFit,testing))
+
+
+### Regression
+# Predicting Regression
+inTrain <- createDataPartition(y=faithful$waiting, p=0.5, list=FALSE)
+trainFaith <- faithful[inTrain, ]; testFaith <- faithful[-inTrain, ]
+lm1 <- lm(eruptions ~ waiting,data=trainFaith)
+summary(lm1)
+
+# Predicting New Data
+newdata <- data.frame(waiting=80)
+predict(lm1,newdata)
+
+# Plotting Regression Line
+par(mfrow=c(1,2))
+plot(trainFaith$waiting,trainFaith$eruptions,pch=19,col="blue",xlab="Waiting",
+     ylab="Duration", main = "Train")
+lines(trainFaith$waiting,predict(lm1),lwd=3)
+plot(testFaith$waiting,testFaith$eruptions,pch=19,col="blue",xlab="Waiting",
+     ylab="Duration", main = "Test")
+lines(testFaith$waiting,predict(lm1,newdata=testFaith),lwd=3)
+
+# RMSE, RMAE
+c(trainRMSE = sqrt(sum( (lm1$fitted - trainFaith$eruptions) ^ 2) ), 
+  testRMSE = sqrt(sum( (predict(lm1, newdata=testFaith) - testFaith$eruptions) ^ 2) ))
+c(trainRMAE = sqrt(sum( abs(lm1$fitted - trainFaith$eruptions) ) ), 
+  testRMAE = sqrt(sum( abs(predict(lm1, newdata=testFaith) - testFaith$eruptions) ) ))
+
+# Prediction Line and Interval Line
+par(mfrow=c(1,1))
+pred1 <- predict(lm1, newdata=testFaith, interval="prediction")
+plot(testFaith$waiting, testFaith$eruptions, pch=19, col="blue")
+matlines(testFaith$waiting, pred1, type='l', col=c(1,2,2), lty=c(1,1,1), lwd=3)
+
+# Regression Diagnostics
+inTrain <- createDataPartition(y=Wage$wage, p=0.7, list=FALSE)
+training <- Wage[inTrain, ]; testing <- Wage[-inTrain, ]
+modFit <- train(wage ~ age + jobclass + education, method="lm", data=training)
+finMod <- modFit$finalModel
+predwage <- predict(modFit, newdata=testing)
+par(mfrow=c(2,2))
+plot(finMod, pch=19, cex=0.5, col="#00000010")
+
+qplot(finMod$fitted, finMod$residuals, color=race, data=training)
+
