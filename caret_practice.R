@@ -176,3 +176,7 @@ plot(finMod, pch=19, cex=0.5, col="#00000010")
 
 qplot(finMod$fitted, finMod$residuals, color=race, data=training)
 
+par(mfrow=c(1,1))
+plot(finMod$residuals, pch=19, cex=0.5)
+
+
